@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<style>
+    body, html {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    .chat-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        border: none;
+        border-radius: 0;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        font-size: 1.25rem;
+    }
+
+    .card-body {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+    }
+
+    .messages-list {
+        margin: 0;
+        padding: 0;
+    }
+
+    .message {
+        margin-bottom: 15px;
+        list-style: none;
+    }
+
+    .message-text {
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+
+    .sent {
+        background-color: #dcf8c6;
+        align-self: flex-end;
+    }
+
+    .received {
+        background-color: #f1f0f0;
+        align-self: flex-start;
+    }
+
+    .message-form {
+        display: flex;
+        padding: 10px;
+        background-color: #fff;
+        box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-input {
+        flex: 1;
+        border-radius: 20px;
+        border: 1px solid #ced4da;
+        padding: 10px;
+        margin-right: 10px;
+    }
+
+    .btn-send {
+        border-radius: 20px;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-send:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="card">
+        <div class="card-header">
+            <div>
+                {% if user.is_authenticated %}
+                    <b>aiCounselor</b>
+                    <a class="btn btn-primary align-right" href="logout">Logout</a>
+                {% else %}
+                    <b>aiCounselor</b>
+                        <a class="btn btn-primary align-right" href="login">Login</a> | <a class="btn btn-primary align-right" href="register">Register</a>
+                      
+                      
+                {% endif %}
+            </div>
+                
+        </div>
+        <div class="card-body messages-box">
+            <ul class="list-unstyled messages-list">
+                <li class="message received">
+          <div class="message-text">
+            <div class="message-sender">
+              <b>AI Chatbot</b>
+            </div>
+            <div class="message-content">
+              Hi {{user.username}}, how can I help you?
+            </div>
+          </div>
+        </li>
+                {% for chat in chats %}
+                    {% if chat.user == request.user %}
+                        <li class="message sent">
+                            <div class="message-text">
+                                <div class="message-sender"><b>You</b></div>
+                                <div class="message-content">{{chat.message}}</div>
+                            </div>
+                        </li>
+                        <li class="message received">
+                            <div class="message-text">
+                                <div class="message-sender"><b>AI Chatbot</b></div>
+                                <div class="message-content">{{chat.response}}</div>
+                            </div>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        <form class="message-form">
+            {% csrf_token %}
+            <input type="text" class="message-input" placeholder="Type your message...">
+            <button type="submit" class="btn-send">Send</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    
+    const messagesList = document.querySelector('.messages-list');
+    const messageForm = document.querySelector('.message-form');
+    const messageInput = document.querySelector('.message-input');
+
+    messageForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const message = messageInput.value.trim();
+        if (message.length === 0) {
+            return;
+        }
+
+        const messageItem = document.createElement('li');
+        messageItem.classList.add('message', 'sent');
+        messageItem.innerHTML = `
+            <div class="message-text">
+                <div class="message-sender"><b>You</b></div>
+                <div class="message-content">${message}</div>
+            </div>`;
+        messagesList.appendChild(messageItem);
+
+        messageInput.value = '';
+
+        fetch('', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'message': message
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const response = data.response;
+            const responseItem = document.createElement('li');
+            responseItem.classList.add('message', 'received');
+            responseItem.innerHTML = `
+                <div class="message-text">
+                    <div class="message-sender"><b>AI Chatbot</b></div>
+                    <div class="message-content">${response}</div>
+                </div>`;
+            messagesList.appendChild(responseItem);
+        });
+    });
+</script>
+{% endblock %}
