@@ -4,6 +4,7 @@ from django.contrib import auth
 from django.contrib.auth.models import User
 from .models import Chat
 from django.utils import timezone
+import markdown
 # Create your views here.
 
 #algorithm starts here
@@ -171,7 +172,7 @@ def chatbot(request):
     chats = Chat.objects.filter(user = request.user) if request.user.is_authenticated else None
     if request.method == 'POST':
         message = request.POST.get('message')
-        response = answer_query(message, chat_history)
+        response = markdown.markdown(answer_query(message, chat_history), extensions=['extra', 'codehilite', 'toc'])
 
         if request.user.is_authenticated:
             chat = Chat(user = request.user, message = message, response = response, time = timezone.now())

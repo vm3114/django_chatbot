@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load markdown_extras %}
 
 {% block styles %}
 <style>
@@ -137,7 +138,7 @@
                         <li class="message received">
                             <div class="message-text">
                                 <div class="message-sender"><b>AI Chatbot</b></div>
-                                <div class="message-content">{{chat.response}}</div>
+                                <div class="message-content">{{ chat.response|markdown|safe }}</div>
                             </div>
                         </li>
                     {% endif %}
